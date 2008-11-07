@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# Wikipedia API -> code_swarm event log
+# by Jamie Wilkinson <http://jamiedubs.com>
 require 'rubygems'
 require 'uri'
 require 'mechanize'
