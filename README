@@ -1,0 +1,47 @@
+Wikiswarm
+===
+
+Generates code_swarm event logs from the Wikipedia API.
+
+Written to visualize edits to the Barack Obama page:
+http://vimeo.com/2177573
+
+
+Usage
+===
+
+Get the code_swarm Processing app installed and working:
+http://code.google.com/p/codeswarm/
+http://github.com/rictic/code_swarm/
+
+Generate an activity.xml using wikipedia.rb -- can accept multiple args:
+
+$ ruby wikipedia.rb "Barack Obama" > activity.xml
+
+It will also generate a merged log from multiple arguments:
+
+$ ruby wikipedia.rb "Barack Obama" "John McCain" "Ron Paul" > activity.xml
+
+And can produce a log of a users' contributions, which fits the few-authors-many-files paradigm better:
+
+$ ruby wikipdia.rb "User:Jamiew" > activity.xml
+
+
+Config
+===
+
+The code_swarm.wikipedia.config file is the config I used to generate the Obama video. It has edges turned on (which turns the histogram off) and lower TTL for authors.
+
+In a code_swarm install you can do something like:
+
+$ ruby wikiswarm/wikipedia.rb "Barack Obama" > data/activity.xml
+$ ./run.sh wikiswarm/code_swarm.wikipedia.config
+
+See the code_swarm docs for how to save frames and use ffmpeg to generate a video. Then add rap music and enjoy!
+
+
+
+Written by Jamie Wilkinson
+http://jamiedubs.com
+Nov. 6th 2008
+
