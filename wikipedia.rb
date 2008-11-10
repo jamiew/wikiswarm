@@ -34,7 +34,7 @@ def user_history(username, offset = '')
   url = "http://en.wikipedia.org/w/index.php?title=Special:Contributions&limit=#{rvlimit}&target=Jamiew"
   url += "&offset=#{offset}" unless offset.empty?
   agent = WWW::Mechanize.new
-  agent.user_agent_alias = "Mac Safari"
+  agent.user_agent = "WikiSwarm <http://github.com/jamiew/wikiswarm/>"
   doc = agent.get(url)
   revisions = (doc/'#bodyContent li').map { |li| 
     
