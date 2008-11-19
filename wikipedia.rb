@@ -5,19 +5,27 @@ require 'rubygems'
 require 'uri'
 require 'mechanize'
 
+# go easy
+def snooze; sleep 2; end
 
 def page_history(page, offset = '')
   STDERR.print "#{offset}.. "; STDERR.flush
   
   rvlimit = 500 # revisions per page
-  url = "http://en.wikipedia.org/w/api.php?action=query&prop=revisions&titles=#{URI.escape(page)}&rvprop=timestamp|user&rvlimit=#{rvlimit}&format=xml"
+  url = "http://en.wikipedia.org/w/api.php?action=query&prop=revisions&titles=#{URI.escape(page)}&rvprop=timestamp|user|size&rvlimit=#{rvlimit}&format=xml"
   url += "&rvstartid=#{offset}" unless offset.empty?
+  snooze
 
+  sleep 0.5 # easy
   agent = WWW::Mechanize.new # FIXME, don't always need to reinitialize 
   doc = Hpricot.XML(agent.get(url).body)
   revisions = (doc/'rev').map { |rev| 
     # STDERR.puts rev['timestamp']
-    {:filename => page, :date => Time::parse(rev['timestamp']).to_i*1000, :author => rev['user'] } 
+    # STDERR.puts Time::parse(rev['timestamp']).to_s    
+    weight = (rev['size'].to_f/100.to_f).ceil rescue 1
+    weight = 1 if weight == 0 #FIXME
+    STDERR.puts "#{rev['timestamp']}: #{rev['size']} => #{weight}"
+    {:filename => page, :date => Time::parse(rev['timestamp']).to_i*1000, :author => rev['user'], :weight => weight } 
   } || []
 
   rvstartid = (doc/'query-continue'/'revisions')[0]['rvstartid'] rescue nil
@@ -35,6 +43,7 @@ def user_history(username, offset = '')
   url += "&offset=#{offset}" unless offset.empty?
   agent = WWW::Mechanize.new
   agent.user_agent = "WikiSwarm <http://github.com/jamiew/wikiswarm/>"
+  snooze
   doc = agent.get(url)
   revisions = (doc/'#bodyContent li').map { |li| 
     
@@ -45,18 +54,18 @@ def user_history(username, offset = '')
     comment = (li/'span').remove
     date = li.innerHTML.split('(')[0][0..-2]
     username = username.gsub('User:','')
-    
+    # weight = rev['size'] || 1
+    weight = 1
     # puts (li/'span').delete 
     # {:filename => (li
     
-    
-    { :filename => filename, :date => Time::parse(date).to_i*1000, :author => username }    
+    { :filename => filename, :date => Time::parse(date).to_i*1000, :author => username, :weight => weight }    
   }.sort_by { |f| f[:date] }
 
   # puts (doc/'a.mw-nextlink').inspect  
 
   link = (doc/'.mw-nextlink')[0]['href'] rescue nil
-  STDERR.puts link.inspect
+  # STDERR.puts link.inspect
   
   rvstartid = link.match('.*offset=(.*)\&.*')[1] rescue nil
   revisions += user_history(username, rvstartid) || [] if rvstartid
@@ -84,7 +93,7 @@ pages.each { |page|
 
 revisions.sort_by { |r| r[:date] }.each { |rev|
   # code_swarm wants unixtime in milliseconds
-  puts %{<event date="#{rev[:date]}" filename="#{rev[:filename]}" author="#{rev[:author]}" />}
+  puts %{<event date="#{rev[:date]}" filename="#{rev[:filename]}" author="#{rev[:author]}" weight="#{rev[:weight]}" />}
 }
 puts '</file_events>'
 exit 0
